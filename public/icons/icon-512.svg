@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#1B5E20"/>
+  <circle cx="256" cy="256" r="190" fill="#2E7D32"/>
+  <text x="256" y="275" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="160" fill="#F9A825">JG</text>
+  <text x="256" y="370" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="42" fill="#FFF8E1">GUESS</text>
+</svg>

@@ -1,0 +1,70 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy to server
+        env:
+          SSH_HOST: ${{ secrets.EC2_HOST }}
+          SSH_USER: ${{ secrets.EC2_USER }}
+        run: |
+          SSH_CMD="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST}"
+
+          ${SSH_CMD} "sudo mkdir -p /opt/quize-game-webapp && sudo chown \$(whoami):\$(whoami) /opt/quize-game-webapp"
+          ${SSH_CMD} "cd /opt/quize-game-webapp && (git rev-parse --git-dir > /dev/null 2>&1 && git fetch origin main && git reset --hard origin/main || git clone https://github.com/fix2015/quize-game-webapp.git .)"
+
+          ${SSH_CMD} "echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u fix2015 --password-stdin"
+          ${SSH_CMD} "cd /opt/quize-game-webapp/infra && docker compose -f docker-compose.prod.yml pull"
+          ${SSH_CMD} "cd /opt/quize-game-webapp/infra && docker compose -f docker-compose.prod.yml down --remove-orphans"
+          ${SSH_CMD} "cd /opt/quize-game-webapp/infra && docker compose -f docker-compose.prod.yml up -d"
+          ${SSH_CMD} "docker image prune -f"
+
+          for i in $(seq 1 12); do
+            if ${SSH_CMD} "curl -sf http://127.0.0.1:3013/health > /dev/null 2>&1"; then
+              echo "Frontend healthy!"
+              break
+            fi
+            echo "Waiting for frontend... ($i/12)"
+            sleep 5
+          done
+
+      - name: Setup nginx (first deploy only)
+        env:
+          SSH_HOST: ${{ secrets.EC2_HOST }}
+          SSH_USER: ${{ secrets.EC2_USER }}
+        run: |
+          SSH_CMD="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST}"
+
+          if ! ${SSH_CMD} "test -f /etc/nginx/sites-enabled/jungle-guess.probooking.app"; then
+            echo "First deploy — setting up nginx..."
+            ${SSH_CMD} "cd /opt/quize-game-webapp && sudo bash infra/setup-server.sh"
+          else
+            echo "Nginx already configured, skipping."
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

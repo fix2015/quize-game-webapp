@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --color-jungle: #2E7D32;
+  --color-jungle-dark: #1B5E20;
+  --color-jungle-light: #4CAF50;
+  --color-golden: #F9A825;
+  --color-golden-dark: #F57F17;
+  --color-earth: #5D4037;
+  --color-earth-light: #795548;
+  --color-tropical: #FF6F00;
+  --color-sky: #29B6F6;
+  --color-success: #66BB6A;
+  --color-error: #EF5350;
+  --color-timer-warn: #FDD835;
+  --color-cream: #FFF8E1;
+  --color-forest: #1B5E20;
+
+  --font-heading: 'Fredoka', sans-serif;
+  --font-body: 'Nunito', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+html {
+  background: #1B5E20;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #1B5E20 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: #FFF8E1;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Prevent zoom on input focus (iOS) */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4CAF50;
+  border-radius: 4px;
+}
